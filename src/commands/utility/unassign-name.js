@@ -13,6 +13,10 @@ module.exports = {
         .setAutocomplete(true)
     ),
   async execute(interaction) {
+    if (!interaction.member.permissions.has("ADMINISTRATOR")) {
+      interaction.reply("You are not allowed to run this command!");
+      return;
+    }
     const name = interaction.options.get("name").value;
 
     try {

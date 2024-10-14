@@ -16,6 +16,10 @@ module.exports = {
       option.setName("new-name").setDescription("New name").setRequired(true)
     ),
   async execute(interaction) {
+    if (!interaction.member.permissions.has("ADMINISTRATOR")) {
+      interaction.reply("You are not allowed to run this command!");
+      return;
+    }
     const name = interaction.options.get("name").value.trim();
     const newName = interaction.options.get("new-name").value.trim();
 

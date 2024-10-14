@@ -19,6 +19,10 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction) {
+    if (!interaction.member.permissions.has("ADMINISTRATOR")) {
+      interaction.reply("You are not allowed to run this command!");
+      return;
+    }
     const name = interaction.options.get("name").value;
     const user = interaction.options.get("user").value.trim();
 
