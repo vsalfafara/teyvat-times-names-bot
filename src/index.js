@@ -158,6 +158,7 @@ async function sendButtons(interaction) {
       }
     }
     const message = await interaction.channel.send({
+      embeds: [new EmbedBuilder().setTitle("Click on one of the buttons")],
       components: [...buttons()],
     });
     const data = await message.fetch();

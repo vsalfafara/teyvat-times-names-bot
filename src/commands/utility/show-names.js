@@ -1,179 +1,110 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const namesSchema = require("../../schema/names-schema");
 
-async function getNames(params = {}) {
+async function getNames(params) {
   const data = await namesSchema.find(params);
   data.sort((a, b) => a.name.localeCompare(b.name));
   return data;
 }
 
-async function showNames() {
-  try {
-    const data = await getNames();
-    const namesData = data.map((name) => {
-      if (name.taken) return `${name.name} (${name.user})`;
-      return name.name;
-    });
-    const alphabetData = [...new Set(namesData.map((name) => name.charAt(0)))];
-    const descriptionData = alphabetData.map((letter) => {
-      return {
-        letter,
-        names: namesData
-          .filter((name) => letter === name.charAt(0))
-          .map((name) => ` - ${name}\n`)
-          .join(""),
-      };
-    });
-    const description = descriptionData
-      .map((data) => {
-        return `**${data.letter}**\n ${data.names}`;
-      })
-      .join("\n");
-
-    return new EmbedBuilder()
-      .setTitle("These are all the names currently listed")
-      .setDescription(description)
-      .setColor("Random");
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
+function noNames() {
+  return new EmbedBuilder()
+    .setTitle("There are no names listed")
+    .setDescription("You can add names by running the command **/add-name**")
+    .setColor("Random");
 }
 
-async function showNamesBySex() {
-  try {
-    const data = await getNames();
-    const maleNames = data
-      .filter((name) => name.sex === "Male")
-      .map((name) => {
-        if (name.taken) return ` - ${name.name} (${name.user})\n`;
-        return ` - ${name.name}\n`;
-      })
-      .join("");
-
-    const femaleNames = data
-      .filter((name) => name.sex === "Female")
-      .map((name) => {
-        if (name.taken) return ` - ${name.name} (Taken)\n`;
-        return ` - ${name.name}\n`;
-      })
-      .join("");
-
-    return new EmbedBuilder()
-      .setTitle("These are all the names separated by sex")
-      .setColor("Random")
-      .addFields(
-        {
-          name: "Male",
-          value: maleNames,
-          inline: true,
-        },
-        {
-          name: "Female",
-          value: femaleNames,
-          inline: true,
-        }
-      );
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
+function allNamesAreTaken() {
+  return new EmbedBuilder()
+    .setTitle("These are all the names currently not taken")
+    .setDescription("All names are taken!")
+    .setColor("Random");
 }
 
-async function showNonTakenNames() {
-  try {
-    const data = await getNames({ taken: false });
-
-    if (!data.length) {
-      return new EmbedBuilder()
-        .setTitle("These are all the names currently not taken")
-        .setDescription("All names are taken!")
-        .setColor("Random");
-    } else {
-      data.sort((a, b) => a.name.localeCompare(b.name));
-
-      const namesData = data.map((name) => {
-        if (name.taken) {
-          return `${name.name}`;
-        }
-        return name.name;
-      });
-      const alphabetData = [
-        ...new Set(namesData.map((name) => name.charAt(0))),
-      ];
-      const descriptionData = alphabetData.map((letter) => {
-        return {
-          letter,
-          names: namesData
-            .filter((name) => letter === name.charAt(0))
-            .map((name) => ` - ${name}\n`)
-            .join(""),
-        };
-      });
-      const description = descriptionData
-        .map((data) => {
-          return `**${data.letter}**\n ${data.names}`;
-        })
-        .join("\n");
-
-      return new EmbedBuilder()
-        .setTitle("These are all the names currently not taken")
-        .setDescription(description)
-        .setColor("Random");
-    }
-  } catch (error) {
-    console.log(error);
-    return false;
+async function alphabeticalOrder(params = {}) {
+  const data = await getNames(params);
+  if (Object.keys(params).length && !data.length) {
+    return allNamesAreTaken();
   }
+  if (!data.length) {
+    return noNames();
+  }
+  const namesData = data.map((name) => {
+    if (name.taken) return `${name.name} (${name.user})`;
+    return name.name;
+  });
+  const alphabetData = [...new Set(namesData.map((name) => name.charAt(0)))];
+  const descriptionData = alphabetData.map((letter) => {
+    return {
+      letter,
+      names: namesData
+        .filter((name) => letter === name.charAt(0))
+        .map((name) => ` - ${name}\n`)
+        .join(""),
+    };
+  });
+
+  const description = descriptionData
+    .map((data) => {
+      return `**${data.letter}**\n ${data.names}`;
+    })
+    .join("\n");
+  return new EmbedBuilder()
+    .setTitle(
+      `These are all the names currently ${
+        Object.keys(params).length ? "available" : "listed"
+      }`
+    )
+    .setDescription(description)
+    .setColor("Random");
 }
 
-async function showNonTakenNamesBySex() {
-  try {
-    const data = await getNames({ taken: false });
-    if (!data.length) {
-      return new EmbedBuilder()
-        .setTitle("These are all the names currently not taken")
-        .setDescription("All names are taken!")
-        .setColor("Random");
-    } else {
-      data.sort((a, b) => a.name.localeCompare(b.name));
-
-      const maleNames = data
-        .filter((name) => name.sex === "Male")
-        .map((name) => {
-          if (name.taken) return ` - ${name.name} (Taken)\n`;
-          return ` - ${name.name}\n`;
-        })
-        .join("");
-
-      const femaleNames = data
-        .filter((name) => name.sex === "Female")
-        .map((name) => {
-          if (name.taken) return ` - ${name.name} (Taken)\n`;
-          return ` - ${name.name}\n`;
-        })
-        .join("");
-
-      return new EmbedBuilder()
-        .setTitle("These are all the names currently not taken")
-        .setColor("Random")
-        .addFields(
-          {
-            name: "Male",
-            value: maleNames,
-            inline: true,
-          },
-          {
-            name: "Female",
-            value: femaleNames,
-            inline: true,
-          }
-        );
-    }
-  } catch (error) {
-    console.log(error);
-    return false;
+async function bySex(params = {}) {
+  const data = await getNames(params);
+  if (Object.keys(params).length && !data.length) {
+    return allNamesAreTaken();
   }
+  if (!data.length) {
+    return noNames();
+  }
+  let maleNames = data
+    .filter((name) => name.sex === "Male")
+    .map((name) => {
+      if (name.taken) return ` - ${name.name} (${name.user})\n`;
+      return ` - ${name.name}\n`;
+    })
+    .join("");
+
+  if (!maleNames.length) {
+    maleNames = "There are no male names available";
+  }
+
+  let femaleNames = data
+    .filter((name) => name.sex === "Female")
+    .map((name) => {
+      if (name.taken) return ` - ${name.name} (${name.user})\n`;
+      return ` - ${name.name}\n`;
+    })
+    .join("");
+  if (!femaleNames.length) {
+    femaleNames = "There are no female names available";
+  }
+
+  return new EmbedBuilder()
+    .setTitle("These are all the names separated by sex")
+    .setColor("Random")
+    .addFields(
+      {
+        name: "Male",
+        value: maleNames,
+        inline: true,
+      },
+      {
+        name: "Female",
+        value: femaleNames,
+        inline: true,
+      }
+    );
 }
 
 module.exports = {
@@ -216,12 +147,12 @@ module.exports = {
       if (embed) interaction.reply({ embeds: [embed] });
       else interaction.reply(embed);
     } else if (interaction.isButton()) {
-      if (interaction.customId === "showNames") embed = await showNames();
-      else if (interaction.customId === "showNamesBySex")
-        embed = await showNamesBySex();
+      if (interaction.customId === "showNames")
+        embed = await alphabeticalOrder();
+      else if (interaction.customId === "showNamesBySex") embed = await bySex();
       else if (interaction.customId === "showNonTakenNames") {
-        embed = await showNonTakenNames();
-      } else embed = await showNonTakenNamesBySex();
+        embed = await alphabeticalOrder({ taken: false });
+      } else embed = await bySex({ taken: false });
 
       if (embed) interaction.channel.send({ embeds: [embed] });
       else interaction.reply(embed);
