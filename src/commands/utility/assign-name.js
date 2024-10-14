@@ -20,18 +20,18 @@ module.exports = {
     ),
   async execute(interaction) {
     const name = interaction.options.get("name").value;
-    const user = interaction.options.get("user").value;
+    const user = interaction.options.get("user").value.trim();
 
     try {
       await namesSchema.findOneAndUpdate(
         { name },
-        { name, sex, user, taken: true },
+        { name, user, taken: true },
         { upsert: true }
       );
-      interaction.channel.send(`Name ${name} has been taken by ${user}!`);
+      interaction.reply(`Name ${name} has been taken by ${user}!`);
     } catch (error) {
       interaction.reply("Something went wrong...");
-      interaction.reply(error);
+      console.log(error);
     }
   },
 };

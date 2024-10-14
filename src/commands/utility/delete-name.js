@@ -3,8 +3,8 @@ const namesSchema = require("../../schema/names-schema.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("unassign-name")
-    .setDescription("Assign name to user")
+    .setName("delete-name")
+    .setDescription("Delete a name")
     .addStringOption((option) =>
       option
         .setName("name")
@@ -13,16 +13,11 @@ module.exports = {
         .setAutocomplete(true)
     ),
   async execute(interaction) {
-    const name = interaction.options.get("name").value;
+    const name = interaction.options.get("name").value.trim();
 
     try {
-      await namesSchema.findOneAndUpdate(
-        { name },
-        { name, user: null, taken: false },
-        { upsert: true }
-      );
-
-      interaction.reply(`${name} is now available!`);
+      await namesSchema.findOneAndDelete({ name });
+      interaction.reply(`${name} has been deleted!`);
     } catch (error) {
       interaction.reply("Something went wrong...");
       console.log(error);

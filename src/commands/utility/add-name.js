@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
+const namesSchema = require("../../schema/names-schema");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,6 +25,18 @@ module.exports = {
         ])
     ),
   async execute(interaction) {
-    console.log(interaction);
+    const name = interaction.options.get("name").value.trim();
+    const sex = interaction.options.get("sex").value;
+    try {
+      await namesSchema.findOneAndUpdate(
+        { name },
+        { name, sex, taken: false },
+        { upsert: true }
+      );
+      interaction.reply(`${name} has been added!`);
+    } catch (error) {
+      interaction.reply("Something went wrong...");
+      interaction.reply(error);
+    }
   },
 };

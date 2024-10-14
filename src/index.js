@@ -6,11 +6,15 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
 } = require("discord.js");
 const mongoose = require("mongoose");
+const { registerCommands } = require("./register-commands");
+const { execute: showNames } = require("./commands/utility/show-names");
+const { execute: addName } = require("./commands/utility/add-name");
+const { execute: editName } = require("./commands/utility/edit-name");
+const { execute: deleteName } = require("./commands/utility/delete-name");
+const { execute: assignName } = require("./commands/utility/assign-name");
+const { execute: unassignName } = require("./commands/utility/unassign-name");
 const namesSchema = require("./schema/names-schema");
 const defaultMessageSchema = require("./schema/default-message-schema");
 const token = process.env.TOKEN;
@@ -30,6 +34,10 @@ client.on("ready", (c) => {
   console.log(`✅ ${c.user.username} is ready`);
 });
 
+client.on("guildCreate", async (guild) => {
+  registerCommands(guild.id);
+});
+
 client.on("interactionCreate", async (interaction) => {
   if (
     !interaction.isChatInputCommand() &&
@@ -37,209 +45,19 @@ client.on("interactionCreate", async (interaction) => {
     !interaction.isAutocomplete()
   )
     return;
-  else if (interaction.commandName === "add-name") {
-    const name = interaction.options.get("name").value;
-    const sex = interaction.options.get("sex").value;
-    try {
-      await namesSchema.findOneAndUpdate(
-        { name },
-        { name, sex, taken: false },
-        { upsert: true }
-      );
-      interaction.reply(`${name} has been added!`);
-    } catch (error) {
-      interaction.reply("Something went wrong...");
-      interaction.reply(error);
-    }
-    sendEmbed(interaction);
-  } else if (interaction.isButton()) {
-    if (interaction.customId === "showAllNames") {
-      try {
-        const data = await namesSchema.find({});
-        data.sort((a, b) => a.name.localeCompare(b.name));
-
-        const namesData = data.map((name) => {
-          if (name.taken) {
-            return `${name.name} (Taken)`;
-          }
-          return name.name;
-        });
-        const alphabetData = [
-          ...new Set(namesData.map((name) => name.charAt(0))),
-        ];
-        const descriptionData = alphabetData.map((letter) => {
-          return {
-            letter,
-            names: namesData
-              .filter((name) => letter === name.charAt(0))
-              .map((name) => ` - ${name}\n`)
-              .join(""),
-          };
-        });
-        const description = descriptionData
-          .map((data) => {
-            return `**${data.letter}**\n ${data.names}`;
-          })
-          .join("\n");
-
-        const embed = new EmbedBuilder()
-          .setTitle("These are all the names currently listed")
-          .setDescription(description)
-          .setColor("Random");
-        interaction.channel.send({ embeds: [embed] });
-      } catch (error) {
-        interaction.reply("Something went wrong...");
-        interaction.reply(error);
-      }
-    } else if (interaction.customId === "showAllNamesSex") {
-      try {
-        const data = await namesSchema.find({});
-        data.sort((a, b) => a.name.localeCompare(b.name));
-        const maleNames = data
-          .filter((name) => name.sex === "Male")
-          .map((name) => {
-            if (name.taken) return ` - ${name.name} (Taken)\n`;
-            return ` - ${name.name}\n`;
-          })
-          .join("");
-
-        const femaleNames = data
-          .filter((name) => name.sex === "Female")
-          .map((name) => {
-            if (name.taken) return ` - ${name.name} (Taken)\n`;
-            return ` - ${name.name}\n`;
-          })
-          .join("");
-
-        const embed = new EmbedBuilder()
-          .setTitle("These are all the names separated by sex")
-          .setColor("Random")
-          .addFields(
-            {
-              name: "Male",
-              value: maleNames,
-              inline: true,
-            },
-            {
-              name: "Female",
-              value: femaleNames,
-              inline: true,
-            }
-          );
-        interaction.channel.send({ embeds: [embed] });
-      } catch (error) {
-        interaction.reply("Something went wrong...");
-        console.log(error);
-      }
-    } else if (interaction.customId === "showAllNonTakenNames") {
-      try {
-        const data = await namesSchema.find({ taken: false });
-
-        if (!data.length) {
-          const embed = new EmbedBuilder()
-            .setTitle("These are all the names currently not taken")
-            .setDescription("All names are taken!")
-            .setColor("Random");
-          interaction.channel.send({ embeds: [embed] });
-        } else {
-          data.sort((a, b) => a.name.localeCompare(b.name));
-
-          const namesData = data.map((name) => {
-            if (name.taken) {
-              return `${name.name}`;
-            }
-            return name.name;
-          });
-          const alphabetData = [
-            ...new Set(namesData.map((name) => name.charAt(0))),
-          ];
-          const descriptionData = alphabetData.map((letter) => {
-            return {
-              letter,
-              names: namesData
-                .filter((name) => letter === name.charAt(0))
-                .map((name) => ` - ${name}\n`)
-                .join(""),
-            };
-          });
-          const description = descriptionData
-            .map((data) => {
-              return `**${data.letter}**\n ${data.names}`;
-            })
-            .join("\n");
-
-          const embed = new EmbedBuilder()
-            .setTitle("These are all the names currently not taken")
-            .setDescription(description)
-            .setColor("Random");
-          interaction.channel.send({ embeds: [embed] });
-        }
-      } catch (error) {
-        interaction.reply("Something went wrong...");
-        interaction.reply(error);
-      }
-    } else if (interaction.customId === "showAllNonTakenNamesSex") {
-      try {
-        const data = await namesSchema.find({ taken: false });
-        console.log("sex");
-        if (!data.length) {
-          const embed = new EmbedBuilder()
-            .setTitle("These are all the names currently not taken")
-            .setDescription("All names are taken!")
-            .setColor("Random");
-          interaction.channel.send({ embeds: [embed] });
-        } else {
-          data.sort((a, b) => a.name.localeCompare(b.name));
-
-          const maleNames = data
-            .filter((name) => name.sex === "Male")
-            .map((name) => {
-              if (name.taken) return ` - ${name.name} (Taken)\n`;
-              return ` - ${name.name}\n`;
-            })
-            .join("");
-
-          const femaleNames = data
-            .filter((name) => name.sex === "Female")
-            .map((name) => {
-              if (name.taken) return ` - ${name.name} (Taken)\n`;
-              return ` - ${name.name}\n`;
-            })
-            .join("");
-
-          const embed = new EmbedBuilder()
-            .setTitle("These are all the names currently not taken")
-            .setColor("Random")
-            .addFields(
-              {
-                name: "Male",
-                value: maleNames,
-                inline: true,
-              },
-              {
-                name: "Female",
-                value: femaleNames,
-                inline: true,
-              }
-            );
-          interaction.channel.send({ embeds: [embed] });
-        }
-      } catch (error) {
-        interaction.reply("Something went wrong...");
-        interaction.reply(error);
-      }
-    }
-    sendEmbed(interaction);
-  } else if (
-    interaction.isAutocomplete() &&
-    interaction.commandName === "assign-name"
+  else if (
+    interaction.commandName === "tt" ||
+    interaction.customId === "showCommands"
   ) {
+    sendEmbed(interaction);
+  } else if (interaction.isAutocomplete()) {
     const value = interaction.options.getFocused().toLowerCase();
-    const data = await namesSchema.find({
+    const params = {
       name: { $regex: value, $options: "i" },
-      taken: false,
-    });
-
+    };
+    if (interaction.commandName === "assign-name") params.taken = false;
+    if (interaction.commandName === "unassign-name") params.taken = true;
+    const data = await namesSchema.find(params);
     let choices = data.map((name) => name.name);
     const filtered = choices
       .filter((choice) => choice.toLowerCase().includes(value))
@@ -247,65 +65,89 @@ client.on("interactionCreate", async (interaction) => {
     await interaction
       .respond(filtered.map((choice) => ({ name: choice, value: choice })))
       .catch(() => {});
-  } else if (
-    interaction.isAutocomplete() &&
-    interaction.commandName === "unassign-name"
-  ) {
-    const value = interaction.options.getFocused().toLowerCase();
-    const data = await namesSchema.find({
-      name: { $regex: value, $options: "i" },
-      taken: true,
-    });
+  } else if (interaction.commandName === "add-name") addName(interaction);
+  else if (interaction.commandName === "edit-name") editName(interaction);
+  else if (interaction.commandName === "delete-name") deleteName(interaction);
+  else if (interaction.commandName === "assign-name") assignName(interaction);
+  else if (interaction.commandName === "unassign-name")
+    unassignName(interaction);
+  else if (interaction.commandName === "show-names" || interaction.isButton())
+    showNames(interaction);
 
-    let choices = data.map((name) => name.name);
-    const filtered = choices
-      .filter((choice) => choice.toLowerCase().includes(value))
-      .slice(0, 25);
-    await interaction
-      .respond(filtered.map((choice) => ({ name: choice, value: choice })))
-      .catch(() => {});
-  } else if (interaction.commandName === "assign-name") {
-    const name = interaction.options.get("name").value;
-    const user = interaction.options.get("user").value;
-
-    try {
-      await namesSchema.findOneAndUpdate(
-        { name },
-        { name, user, taken: true },
-        { upsert: true }
-      );
-      interaction.reply(`Name ${name} has been taken by ${user}!`);
-    } catch (error) {
-      console.log(error);
-    }
-    sendEmbed(interaction);
-  } else if (interaction.commandName === "unassign-name") {
-    const name = interaction.options.get("name").value;
-    console.log(name);
-
-    try {
-      await namesSchema.findOneAndUpdate(
-        { name },
-        { name, user: null, taken: false },
-        { upsert: true }
-      );
-      interaction.reply(`${name} is now available again!`);
-    } catch (error) {
-      console.log(error);
-    }
-    sendEmbed(interaction);
+  if (interaction.isChatInputCommand() || interaction.isButton()) {
+    await sendButtons(interaction);
   }
 });
 
 async function sendEmbed(interaction) {
+  const embed = new EmbedBuilder()
+    .setTitle("TT Names")
+    .setDescription(
+      "A bot to manage all Teyvat Times nicknames. Click one of the buttons below or use the following slash commands:"
+    )
+    .addFields(
+      {
+        name: "/tt",
+        value: "Show list of commands",
+      },
+      {
+        name: "/show-names",
+        value: `
+        Show names in alphabetical order
+        Options: by-sex, non-taken
+      `,
+      },
+      {
+        name: "/add-name",
+        value: `
+        Add a name to the list
+        Options: name, sex
+      `,
+      },
+      {
+        name: "/edit-name",
+        value: `
+        Edit an existing name
+        Options: name, new-name
+      `,
+      },
+      {
+        name: "/delete-name",
+        value: `
+        Delete a name from the list
+        Options: name
+      `,
+      },
+      {
+        name: "/assign-name",
+        value: `
+        Assign a name to a user
+        Options: name, user
+      `,
+      },
+      {
+        name: "/unassign-name",
+        value: `
+        Remove a user from a taken name
+        Options: name
+      `,
+      }
+    )
+    .setColor("Random");
+  if (interaction.isChatInputCommand()) {
+    await interaction.reply({
+      embeds: [embed],
+    });
+  } else {
+    await interaction.channel.send({
+      embeds: [embed],
+    });
+  }
+}
+
+async function sendButtons(interaction) {
   try {
-    const embed = new EmbedBuilder()
-      .setTitle("TT Names")
-      .setDescription("A bot to manage all Teyvat Times nicknames")
-      .setColor("Random");
-
     const previousDefaultMessageId = await defaultMessageSchema.findOne({});
-
     if (previousDefaultMessageId) {
       const previousMessage = await interaction.channel.messages.fetch(
         previousDefaultMessageId?._id
@@ -316,7 +158,6 @@ async function sendEmbed(interaction) {
       }
     }
     const message = await interaction.channel.send({
-      embeds: [embed],
       components: [...buttons()],
     });
     const data = await message.fetch();
@@ -327,37 +168,41 @@ async function sendEmbed(interaction) {
 }
 
 function buttons() {
-  const showAllNames = new ButtonBuilder()
-    .setCustomId("showAllNames")
-    .setLabel("Show all names (Alphabetical order)")
+  const showNames = new ButtonBuilder()
+    .setCustomId("showNames")
+    .setLabel("Show all names (Sorted)")
     .setStyle(ButtonStyle.Primary);
 
-  const showAllNamesSex = new ButtonBuilder()
-    .setCustomId("showAllNamesSex")
+  const showNamesBySex = new ButtonBuilder()
+    .setCustomId("showNamesBySex")
     .setLabel("Show all names (Separated by sex)")
     .setStyle(ButtonStyle.Success);
 
-  const showAllNonTakenNames = new ButtonBuilder()
-    .setCustomId("showAllNonTakenNames")
-    .setLabel("Show all names that are not yet taken")
+  const showNonTakenNames = new ButtonBuilder()
+    .setCustomId("showNonTakenNames")
+    .setLabel("Show all names that are not taken (Sorted)")
     .setStyle(ButtonStyle.Secondary);
 
-  const showAllNonTakenNamesSex = new ButtonBuilder()
-    .setCustomId("showAllNonTakenNamesSex")
-    .setLabel("Show all names that are not yet taken (Separated by sex)")
+  const showNonTakenNamesBySex = new ButtonBuilder()
+    .setCustomId("showNonTakenNamesBySex")
+    .setLabel("Show all names that are not taken (Separated by sex)")
     .setStyle(ButtonStyle.Danger);
 
-  const row1 = new ActionRowBuilder().addComponents(
-    showAllNames,
-    showAllNamesSex
-  );
+  const showCommands = new ButtonBuilder()
+    .setCustomId("showCommands")
+    .setLabel("Show list of commands")
+    .setStyle(ButtonStyle.Primary);
 
-  const row2 = new ActionRowBuilder().addComponents(
-    showAllNonTakenNames,
-    showAllNonTakenNamesSex
-  );
+  const content = [
+    new ActionRowBuilder().addComponents(showNames, showNamesBySex),
+    new ActionRowBuilder().addComponents(
+      showNonTakenNames,
+      showNonTakenNamesBySex
+    ),
+    new ActionRowBuilder().addComponents(showCommands),
+  ];
 
-  return [row1, row2];
+  return content;
 }
 
 client.login(token);
