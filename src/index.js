@@ -49,7 +49,6 @@ client.on("interactionCreate", async (interaction) => {
     interaction.commandName === "tt" ||
     interaction.customId === "showCommands"
   ) {
-    await defaultMessageSchema.deleteMany();
     sendEmbed(interaction);
   } else if (interaction.isAutocomplete()) {
     const value = interaction.options.getFocused().toLowerCase();
@@ -75,9 +74,9 @@ client.on("interactionCreate", async (interaction) => {
   else if (interaction.commandName === "show-names" || interaction.isButton())
     showNames(interaction);
 
-  if (interaction.isChatInputCommand() || interaction.isButton()) {
-    await sendButtons(interaction);
-  }
+  // if (interaction.isChatInputCommand() || interaction.isButton()) {
+  //   await sendButtons(interaction);
+  // }
 });
 
 async function sendEmbed(interaction) {
@@ -148,16 +147,16 @@ async function sendEmbed(interaction) {
 
 async function sendButtons(interaction) {
   try {
-    const previousDefaultMessageId = await defaultMessageSchema.findOne({});
-    if (previousDefaultMessageId) {
-      const previousMessage = await interaction.channel.messages.fetch(
-        previousDefaultMessageId?._id
-      );
-      if (previousMessage) {
-        await previousMessage.delete();
-        await defaultMessageSchema.deleteMany();
-      }
-    }
+    // const previousDefaultMessageId = await defaultMessageSchema.findOne({});
+    // if (previousDefaultMessageId) {
+    //   const previousMessage = await interaction.channel.messages.fetch(
+    //     previousDefaultMessageId?._id
+    //   );
+    //   if (previousMessage) {
+    //     await previousMessage.delete();
+    //     await defaultMessageSchema.deleteMany();
+    //   }
+    // }
     const message = await interaction.channel.send({
       embeds: [new EmbedBuilder().setTitle("Click on one of the buttons")],
       components: [...buttons()],
