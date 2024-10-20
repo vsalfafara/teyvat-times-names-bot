@@ -157,12 +157,12 @@ async function sendButtons(interaction) {
     //     await defaultMessageSchema.deleteMany();
     //   }
     // }
-    const message = await interaction.channel.send({
+    // const data = await message.fetch();
+    // await defaultMessageSchema.create({ _id: data.id });
+    await interaction.channel.send({
       embeds: [new EmbedBuilder().setTitle("Click on one of the buttons")],
       components: [...buttons()],
     });
-    const data = await message.fetch();
-    await defaultMessageSchema.create({ _id: data.id });
   } catch (error) {
     console.log(error);
   }
