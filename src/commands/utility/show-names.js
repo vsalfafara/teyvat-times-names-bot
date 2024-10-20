@@ -70,8 +70,8 @@ async function bySex(params = {}) {
   let maleNames = data
     .filter((name) => name.sex === "Male")
     .map((name) => {
-      if (name.taken) return ` - ${name.name} (${name.user})\n`;
-      return ` - ${name.name}\n`;
+      if (name.taken) return `${name.name} (${name.user})\n`;
+      return `${name.name}\n`;
     })
     .join("");
 
@@ -82,8 +82,8 @@ async function bySex(params = {}) {
   let femaleNames = data
     .filter((name) => name.sex === "Female")
     .map((name) => {
-      if (name.taken) return ` - ${name.name} (${name.user})\n`;
-      return ` - ${name.name}\n`;
+      if (name.taken) return `${name.name} (${name.user})\n`;
+      return `${name.name}\n`;
     })
     .join("");
   if (!femaleNames.length) {
