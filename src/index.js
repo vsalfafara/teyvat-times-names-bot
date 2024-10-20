@@ -49,6 +49,7 @@ client.on("interactionCreate", async (interaction) => {
     interaction.commandName === "tt" ||
     interaction.customId === "showCommands"
   ) {
+    await defaultMessageSchema.deleteMany();
     sendEmbed(interaction);
   } else if (interaction.isAutocomplete()) {
     const value = interaction.options.getFocused().toLowerCase();
