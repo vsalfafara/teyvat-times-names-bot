@@ -50,6 +50,7 @@ client.on("interactionCreate", async (interaction) => {
     interaction.customId === "showCommands"
   ) {
     sendEmbed(interaction);
+    sendButtons(interaction);
   } else if (interaction.isAutocomplete()) {
     const value = interaction.options.getFocused().toLowerCase();
     const params = {
