@@ -70,8 +70,8 @@ async function bySex(params = {}) {
   let maleNames = data
     .filter((name) => name.sex === "Male")
     .map((name) => {
-      if (name.taken) return `${name.name} (${name.user})\n`;
-      return `${name.name}\n`;
+      if (name.taken) return ` - ${name.name} (${name.user})\n`;
+      return ` - ${name.name}\n`;
     })
     .join("");
 
@@ -82,8 +82,8 @@ async function bySex(params = {}) {
   let femaleNames = data
     .filter((name) => name.sex === "Female")
     .map((name) => {
-      if (name.taken) return `${name.name} (${name.user})\n`;
-      return `${name.name}\n`;
+      if (name.taken) return ` - ${name.name} (${name.user})\n`;
+      return ` - ${name.name}\n`;
     })
     .join("");
   if (!femaleNames.length) {
@@ -93,34 +93,29 @@ async function bySex(params = {}) {
   let otherNames = data
     .filter((name) => name.sex === "Other")
     .map((name) => {
-      if (name.taken) return `${name.name} (${name.user})\n`;
-      return `${name.name}\n`;
+      if (name.taken) return ` - ${name.name} (${name.user})\n`;
+      return ` - ${name.name}\n`;
     })
     .join("");
   if (!femaleNames.length) {
     femaleNames = "There are no other names available";
   }
 
+  const description = `
+  Male
+  ${maleNames}
+
+  Female
+  ${femaleNames}
+
+  Other
+  ${otherNames}
+  `;
+
   return new EmbedBuilder()
     .setTitle("These are all the names separated by sex")
-    .setColor("Random")
-    .addFields(
-      {
-        name: "Male",
-        value: maleNames,
-        inline: true,
-      },
-      {
-        name: "Female",
-        value: femaleNames,
-        inline: true,
-      },
-      {
-        name: "Other",
-        value: otherNames,
-        inline: true,
-      }
-    );
+    .setDescription(description)
+    .setColor("Random");
 }
 
 module.exports = {
