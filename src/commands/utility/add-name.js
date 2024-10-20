@@ -11,7 +11,7 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("sex")
-        .setDescription("Male or Female")
+        .setDescription("Male, Female, Other")
         .setRequired(true)
         .addChoices([
           {
@@ -21,6 +21,10 @@ module.exports = {
           {
             name: "Female",
             value: "Female",
+          },
+          {
+            name: "Other",
+            value: "Other",
           },
         ])
     ),

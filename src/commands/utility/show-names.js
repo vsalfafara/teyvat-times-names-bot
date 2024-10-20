@@ -90,6 +90,17 @@ async function bySex(params = {}) {
     femaleNames = "There are no female names available";
   }
 
+  let otherNames = data
+    .filter((name) => name.sex === "Other")
+    .map((name) => {
+      if (name.taken) return `${name.name} (${name.user})\n`;
+      return `${name.name}\n`;
+    })
+    .join("");
+  if (!femaleNames.length) {
+    femaleNames = "There are no other names available";
+  }
+
   return new EmbedBuilder()
     .setTitle("These are all the names separated by sex")
     .setColor("Random")
@@ -102,6 +113,11 @@ async function bySex(params = {}) {
       {
         name: "Female",
         value: femaleNames,
+        inline: true,
+      },
+      {
+        name: "Other",
+        value: otherNames,
         inline: true,
       }
     );
