@@ -76,7 +76,7 @@ client.on("interactionCreate", async (interaction) => {
     showNames(interaction);
 
   if (interaction.isChatInputCommand() || interaction.isButton()) {
-    await sendButtons(interaction);
+    sendButtons(interaction);
   }
 });
 
@@ -135,15 +135,9 @@ async function sendEmbed(interaction) {
       }
     )
     .setColor("Random");
-  if (interaction.isChatInputCommand()) {
-    await interaction.reply({
-      embeds: [embed],
-    });
-  } else {
-    await interaction.channel.send({
-      embeds: [embed],
-    });
-  }
+  await interaction.reply({
+    embeds: [embed],
+  });
 }
 
 async function sendButtons(interaction) {
